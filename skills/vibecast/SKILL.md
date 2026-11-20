@@ -66,7 +66,7 @@ Example starting heights (estimates; verify with the disclosure open): base 600p
 1. In WordPress, open Vibecasts → Add Vibecast as an administrator.
 2. Add a title, paste the HTML into Reusable HTML, and enter the four supplied heights under Responsive heights.
 3. Save a draft and inspect the saved preview, including each width range, narrow-screen readability, and expanded disclosures. Unsupported markup is removed when saved.
-4. Publish, then insert the Vibecast block and select the published item by name, or use `[cr_vibecast id="123"]` with the actual ID.
+4. Publish, then insert the Vibecast block and select the published item by name, or use `[cast-vibecoded-content id="123"]` with the actual ID.
 5. Verify on the actual page and increase any height that clips content. The block automatically uses the saved heights; for an older fixed-height placement, choose Use saved responsive heights. Updating a published cast updates every placement; WordPress revisions retain saved HTML.
 
 The skill is authoring guidance only. It does not publish content, grant permissions, or change the plugin's HTML rules.

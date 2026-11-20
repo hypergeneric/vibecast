@@ -1,14 +1,14 @@
-=== Vibecast ===
-Contributors: hypergeneric
+=== Vibecast by Compiled Rogue ===
+Contributors: michaelsablone
 Tags: reusable content, html, shortcode, blocks
 Requires at least: 6.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.0.1
 License: GPL-2.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Vibe-code clean, static HTML sections with your AI tool, then preview, publish, and reuse them across your WordPress site.
+Cast Vibecoded Content into WordPress.
 
 == Description ==
 
@@ -33,7 +33,7 @@ No AI account is connected to WordPress. The plugin sends no telemetry. Images i
 2. Open Vibecasts > Agent skill. Copy the instructions or download SKILL.md for your AI tool. For a ready-made introduction, choose Create My First Vibecast.
 3. Describe the section you want and ask for its HTML artifact and four height values.
 4. Add a Vibecast, paste the HTML, enter the heights, and save a draft to preview it.
-5. Publish, then select it by name in the Vibecast block, or use [cr_vibecast id="123"].
+5. Publish, then select it by name in the Vibecast block, or use [cast-vibecoded-content id="123"].
 
 == Frequently Asked Questions ==
 
@@ -50,7 +50,7 @@ Check each width range with images loaded, disclosures expanded, and larger text
 Users with the manage_options capability can create, edit, and publish Vibecasts. Content editors can place published sections in their posts using the block or shortcode. Drafts and private sections are not rendered publicly.
 
 = Can I use a slug or a fixed height? =
-Yes: [cr_vibecast slug="my-panel"]. An ID takes precedence if both are supplied. An explicit height attribute overrides the saved heights for that placement. Existing fixed-height blocks can switch to saved responsive heights.
+Yes: [cast-vibecoded-content slug="my-panel"]. An ID takes precedence if both are supplied. An explicit height attribute overrides the saved heights for that placement. Existing fixed-height blocks can switch to saved responsive heights.
 
 = Can I restore an earlier version? =
 Yes. WordPress revisions include the HTML and heights, with comparisons available before restoring. Revision retention follows your site's settings.
@@ -59,6 +59,10 @@ Yes. WordPress revisions include the HTML and heights, with comparisons availabl
 Content, revisions, and saved configuration are retained. Blocks stop rendering while the plugin is inactive, and shortcodes may appear as text.
 
 == Changelog ==
+
+= 1.0.1 =
+* Updated plugin identity and contributor attribution.
+* Load placement styles through WordPress asset hooks.
 
 = 1.0.0 =
 Initial release with an agent authoring skill, reusable HTML library, responsive heights, saved previews, revision comparisons, block and shortcode placement, and a built-in example.

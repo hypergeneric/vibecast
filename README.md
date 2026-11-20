@@ -1,6 +1,8 @@
-# Vibecast
+# Vibecast by Compiled Rogue
 
-Version 1.0.0 · WordPress 6.4+ · PHP 7.4+ · GPL-2.0-or-later
+Cast Vibecoded Content into WordPress.
+
+Version 1.0.1 · WordPress 6.4+ · PHP 7.4+ · GPL-2.0-or-later
 
 **Vibe-code clean, static HTML. Make it part of your WordPress site.**
 
@@ -13,7 +15,7 @@ Vibecast's bundled agent skill gives your AI a shared format: clean HTML, inline
 1. Open **Vibecasts → Agent skill** and copy the instructions or download `SKILL.md` for your AI tool.
 2. Describe what you want. Ask for the HTML artifact and its four height values.
 3. Add a Vibecast, paste the HTML, enter the heights, and save a draft to preview it.
-4. Publish, then select it by name in the **Vibecast block**, or use `[cr_vibecast id="123"]`.
+4. Publish, then select it by name in the **Vibecast block**, or use `[cast-vibecoded-content id="123"]`.
 
 For a ready-made introduction, choose **Create My First Vibecast** on the Agent skill screen. The example explains Vibecast while demonstrating it. It starts as a draft; opening it again preserves your edits.
 
@@ -40,9 +42,13 @@ WordPress revisions include the HTML and heights, with comparisons available bef
 
 No AI account is connected to WordPress. Use the authoring skill with your preferred tool. The plugin sends no telemetry. Images included in your HTML load from their specified HTTP or HTTPS URLs.
 
-Shortcodes also support slugs: `[cr_vibecast slug="my-panel"]`. An explicit `height` attribute provides a fixed height when needed. Existing fixed-height blocks can switch to the saved responsive heights.
+Shortcodes also support slugs: `[cast-vibecoded-content slug="my-panel"]`. An explicit `height` attribute provides a fixed height when needed. Existing fixed-height blocks can switch to the saved responsive heights.
 
 ## Changelog
+
+### 1.0.1
+
+Updated plugin identity and contributor attribution; placement styles now load through WordPress asset hooks.
 
 ### 1.0.0
 

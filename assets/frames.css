@@ -1,0 +1,5 @@
+.cr-vibecast-wrap{container:cr-vibecast / inline-size;display:block;width:100%;min-width:0}
+.cr-vibecast-wrap>iframe{display:block;width:100%;max-width:100%;height:var(--cr-vibecast-base,600px);border:0}
+@container cr-vibecast (min-width:640px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-sm)}}
+@container cr-vibecast (min-width:768px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-md)}}
+@container cr-vibecast (min-width:1024px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-lg)}}

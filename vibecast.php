@@ -1,15 +1,15 @@
 <?php
 /**
- * Plugin Name: Vibecast
- * Description: Turn AI-authored HTML into reusable, isolated sections with an authoring skill and responsive height presets.
- * Version: 1.0.0
+ * Plugin Name: Vibecast by Compiled Rogue
+ * Description: Cast Vibecoded Content into WordPress.
+ * Version: 1.0.1
  * Requires at least: 6.4
  * Requires PHP: 7.4
  * Author: Compiled Rogue
  * Author URI: https://compiledrogue.com/
  * License: GPL-2.0-or-later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain: vibecast
+ * Text Domain: cast-vibecoded-content
  */
 namespace CompiledRogue\VibeCast;
 
@@ -53,10 +53,10 @@ final class Plugin {
     public static function register(): void {
         register_post_type('cr_vibecast', [
             'labels' => [
-                'name' => __('Vibecasts', 'vibecast'),
-                'singular_name' => __('Vibecast', 'vibecast'),
-                'add_new_item' => __('Add Vibecast', 'vibecast'),
-                'edit_item' => __('Edit Vibecast', 'vibecast'),
+                'name' => __('Vibecasts', 'cast-vibecoded-content'),
+                'singular_name' => __('Vibecast', 'cast-vibecoded-content'),
+                'add_new_item' => __('Add Vibecast', 'cast-vibecoded-content'),
+                'edit_item' => __('Edit Vibecast', 'cast-vibecoded-content'),
             ],
             'public' => false, 'show_ui' => true, 'show_in_rest' => false,
             'rewrite' => false, 'query_var' => false, 'menu_icon' => 'dashicons-editor-code',
@@ -80,14 +80,14 @@ final class Plugin {
             'auth_callback' => static function ($allowed, $key, $id) { return current_user_can('manage_options') && current_user_can('edit_post', $id); },
         ]);
         wp_register_script('vibecast-editor', plugins_url('assets/editor.js', __FILE__), ['wp-blocks', 'wp-element', 'wp-components', 'wp-block-editor', 'wp-i18n'], substr(md5_file(__DIR__ . '/assets/editor.js'), 0, 12), true);
-        wp_set_script_translations('vibecast-editor', 'vibecast');
+        wp_set_script_translations('vibecast-editor', 'cast-vibecoded-content');
         register_block_type('cr-vibecast/cast', [
             'api_version' => 3, 'editor_script' => 'vibecast-editor',
             'attributes' => ['id' => ['type' => 'integer', 'default' => 0], 'height' => ['type' => 'integer', 'default' => 0]],
             'render_callback' => static function ($attrs) { return self::render(absint($attrs['id'] ?? 0), absint($attrs['height'] ?? 0)); },
         ]);
-        add_shortcode('cr_vibecast', static function ($attrs) {
-            $attrs = shortcode_atts(['id' => 0, 'slug' => '', 'height' => 0], $attrs, 'cr_vibecast');
+        add_shortcode('cast-vibecoded-content', static function ($attrs) {
+            $attrs = shortcode_atts(['id' => 0, 'slug' => '', 'height' => 0], $attrs, 'cast-vibecoded-content');
             $id = absint($attrs['id']);
             if (!$id && $attrs['slug']) {
                 $post = get_page_by_path(sanitize_title($attrs['slug']), OBJECT, 'cr_vibecast');
@@ -95,6 +95,18 @@ final class Plugin {
             }
             return self::render($id, absint($attrs['height']));
         });
+    }
+
+    public static function enqueue_styles(): void {
+        // A tiny shared stylesheet also supports placements reached by partial-page navigation.
+        wp_enqueue_style('vibecast-frames', plugins_url('assets/frames.css', __FILE__), [], '1.0.1');
+    }
+
+    public static function admin_styles(): void {
+        $screen = get_current_screen();
+        if ($screen && 'cr_vibecast' === $screen->post_type) {
+            self::enqueue_styles();
+        }
     }
 
     public static function published_casts(): array {
@@ -117,7 +129,15 @@ final class Plugin {
 
     public static function document(string $content, bool $full = false, string $title = ''): string {
         $overflow = $full ? '' : 'html,body{overflow:hidden!important}*,*::before,*::after{overflow:clip!important;scrollbar-width:none!important}*::-webkit-scrollbar{display:none!important}';
-        return '<!doctype html><html><head><title>' . esc_html($title ?: __('Vibecast', 'vibecast')) . '</title><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; script-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src https: http:; base-uri &#39;none&#39;; form-action &#39;none&#39;"><meta name="viewport" content="width=device-width, initial-scale=1"><style>html,body{margin:0}body{overflow-wrap:anywhere}*,*::before,*::after{box-sizing:border-box}' . $overflow . 'img{max-width:100%;height:auto}</style></head><body>' . $content . '</body></html>';
+        // Each srcdoc is a separate document and needs its own style queue.
+        $styles = new \WP_Styles();
+        $styles->add('vibecast-document', false);
+        $styles->add_inline_style('vibecast-document', 'html,body{margin:0}body{overflow-wrap:anywhere}*,*::before,*::after{box-sizing:border-box}' . $overflow . 'img{max-width:100%;height:auto}');
+        $styles->enqueue('vibecast-document');
+        ob_start();
+        $styles->do_items();
+        $document_styles = ob_get_clean();
+        return '<!doctype html><html><head><title>' . esc_html($title ?: __('Vibecast', 'cast-vibecoded-content')) . '</title><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; script-src &#39;none&#39;; style-src &#39;unsafe-inline&#39;; img-src https: http:; base-uri &#39;none&#39;; form-action &#39;none&#39;"><meta name="viewport" content="width=device-width, initial-scale=1">' . $document_styles . '</head><body>' . $content . '</body></html>';
     }
 
     public static function render(int $id, int $height = 0, bool $preview = false): string {
@@ -143,16 +163,10 @@ final class Plugin {
         foreach ($heights as $key => $value) {
             $variables .= '--cr-vibecast-' . $key . ':' . $value . 'px;';
         }
-        // Static, plugin-owned CSS travels with each placement, including partial-page navigation.
-        $css = '.cr-vibecast-wrap{container:cr-vibecast / inline-size;display:block;width:100%;min-width:0}'
-            . '.cr-vibecast-wrap>iframe{display:block;width:100%;max-width:100%;height:var(--cr-vibecast-base,600px);border:0}'
-            . '@container cr-vibecast (min-width:640px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-sm)}}'
-            . '@container cr-vibecast (min-width:768px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-md)}}'
-            . '@container cr-vibecast (min-width:1024px){.cr-vibecast-wrap>iframe{height:var(--cr-vibecast-lg)}}';
-        return '<style>' . $css . '</style><div class="cr-vibecast-wrap" style="' . esc_attr($variables) . '">'
+        return '<div class="cr-vibecast-wrap" style="' . esc_attr($variables) . '">'
             . sprintf('<iframe title="%s" sandbox="" scrolling="no" referrerpolicy="no-referrer" loading="lazy" srcdoc="%s"></iframe>',
-                esc_attr($post->post_title ?: __('Vibecast', 'vibecast')), htmlspecialchars($document, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', true)) . '</div>'
-            . ('publish' === $post->post_status && '' === $post->post_password ? '<p><a href="' . esc_url(add_query_arg(['action' => 'vibecast_full', 'id' => $id], admin_url('admin-post.php'))) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Open full content', 'vibecast') . '</a></p>' : '');
+                esc_attr($post->post_title ?: __('Vibecast', 'cast-vibecoded-content')), htmlspecialchars($document, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8', true)) . '</div>'
+            . ('publish' === $post->post_status && '' === $post->post_password ? '<p><a href="' . esc_url(add_query_arg(['action' => 'vibecast_full', 'id' => $id], admin_url('admin-post.php'))) . '" target="_blank" rel="noopener noreferrer">' . esc_html__('Open full content', 'cast-vibecoded-content') . '</a></p>' : '');
     }
 
     public static function full_view(): void {
@@ -160,7 +174,7 @@ final class Plugin {
         $id = isset($_GET['id']) && is_string($_GET['id']) ? absint(wp_unslash($_GET['id'])) : 0;
         $post = $id ? get_post($id) : null;
         if (!$post || 'cr_vibecast' !== $post->post_type || 'publish' !== $post->post_status || '' !== $post->post_password) {
-            wp_die(esc_html__('This Vibecast is unavailable.', 'vibecast'), '', ['response' => 404]);
+            wp_die(esc_html__('This Vibecast is unavailable.', 'cast-vibecoded-content'), '', ['response' => 404]);
         }
         nocache_headers();
         header('Content-Type: text/html; charset=UTF-8');
@@ -176,7 +190,7 @@ final class Plugin {
         if ('cr_vibecast' !== get_post_type($parent)) {
             return $diffs;
         }
-        foreach (['_vibecast_code' => __('HTML content', 'vibecast'), '_vibecast_heights' => __('Responsive heights', 'vibecast')] as $key => $label) {
+        foreach (['_vibecast_code' => __('HTML content', 'cast-vibecoded-content'), '_vibecast_heights' => __('Responsive heights', 'cast-vibecoded-content')] as $key => $label) {
             $before = $from ? get_post_meta($from->ID, $key, true) : '';
             $after = get_post_meta($to->ID, $key, true);
             if ('_vibecast_heights' === $key) {
@@ -193,11 +207,11 @@ final class Plugin {
     }
 
     public static function skill_menu(): void {
-        $hook = add_submenu_page('edit.php?post_type=cr_vibecast', __('Agent skill', 'vibecast'), __('Agent skill', 'vibecast'), 'manage_options', 'vibecast-skill', [self::class, 'skill_page']);
+        $hook = add_submenu_page('edit.php?post_type=cr_vibecast', __('Agent skill', 'cast-vibecoded-content'), __('Agent skill', 'cast-vibecoded-content'), 'manage_options', 'vibecast-skill', [self::class, 'skill_page']);
         add_action('admin_enqueue_scripts', static function ($screen) use ($hook) {
             if ($screen === $hook) {
-                wp_enqueue_script('vibecast-skill', plugins_url('assets/skill.js', __FILE__), ['wp-i18n'], '1.0.0', true);
-                wp_set_script_translations('vibecast-skill', 'vibecast');
+                wp_enqueue_script('vibecast-skill', plugins_url('assets/skill.js', __FILE__), ['wp-i18n'], '1.0.1', true);
+                wp_set_script_translations('vibecast-skill', 'cast-vibecoded-content');
             }
         });
     }
@@ -210,7 +224,7 @@ final class Plugin {
 
     public static function create_sample() {
         if (!current_user_can('manage_options')) {
-            return new \WP_Error('vibecast_forbidden', __('You cannot create a Vibecast.', 'vibecast'));
+            return new \WP_Error('vibecast_forbidden', __('You cannot create a Vibecast.', 'cast-vibecoded-content'));
         }
         $existing = self::sample_id();
         if ($existing) {
@@ -219,11 +233,11 @@ final class Plugin {
         $html = file_get_contents(__DIR__ . '/examples/my-first-vibecast.html');
         $heights = json_decode(file_get_contents(__DIR__ . '/examples/my-first-vibecast-heights.json'), true);
         if (false === $html || !is_array($heights)) {
-            return new \WP_Error('vibecast_sample_missing', __('The bundled example could not be read.', 'vibecast'));
+            return new \WP_Error('vibecast_sample_missing', __('The bundled example could not be read.', 'cast-vibecoded-content'));
         }
         $id = wp_insert_post(wp_slash([
             'post_type' => 'cr_vibecast', 'post_status' => 'draft',
-            'post_title' => __('My First Vibecast', 'vibecast'),
+            'post_title' => __('My First Vibecast', 'cast-vibecoded-content'),
             'post_author' => get_current_user_id(),
             'meta_input' => ['_vibecast_code' => self::sanitize($html), '_vibecast_heights' => self::sanitize_heights($heights)],
         ]), true);
@@ -235,7 +249,7 @@ final class Plugin {
 
     public static function install_sample(): void {
         if (!current_user_can('manage_options') || 'POST' !== sanitize_text_field(wp_unslash($_SERVER['REQUEST_METHOD'] ?? ''))) {
-            wp_die(esc_html__('You cannot create a Vibecast.', 'vibecast'), '', ['response' => 403]);
+            wp_die(esc_html__('You cannot create a Vibecast.', 'cast-vibecoded-content'), '', ['response' => 403]);
         }
         check_admin_referer('vibecast_create_sample');
         $id = self::create_sample();
@@ -251,47 +265,47 @@ final class Plugin {
             return;
         }
         $instructions = file_get_contents(__DIR__ . '/skills/vibecast/SKILL.md');
-        echo '<div class="wrap"><h1>' . esc_html__('Vibecast agent skill', 'vibecast') . '</h1>';
-        echo '<p>' . esc_html__('Give these instructions to your AI tool, describe the content you want, then paste the generated HTML into a new Vibecast. Save a draft to preview it before publishing.', 'vibecast') . '</p>';
-        echo '<p>' . esc_html__('Copy the instructions into a conversation, or download SKILL.md for an AI tool that supports skills. No AI account is connected to WordPress.', 'vibecast') . '</p>';
+        echo '<div class="wrap"><h1>' . esc_html__('Vibecast agent skill', 'cast-vibecoded-content') . '</h1>';
+        echo '<p>' . esc_html__('Give these instructions to your AI tool, describe the content you want, then paste the generated HTML into a new Vibecast. Save a draft to preview it before publishing.', 'cast-vibecoded-content') . '</p>';
+        echo '<p>' . esc_html__('Copy the instructions into a conversation, or download SKILL.md for an AI tool that supports skills. No AI account is connected to WordPress.', 'cast-vibecoded-content') . '</p>';
         $sample = self::sample_id();
-        echo '<h2>' . esc_html__('Try a living example', 'vibecast') . '</h2>';
-        echo '<p>' . esc_html__('My First Vibecast explains the idea while demonstrating it. It includes HTML and measured responsive heights. Create it as a draft, explore the preview, then make it your own.', 'vibecast') . '</p>';
+        echo '<h2>' . esc_html__('Try a living example', 'cast-vibecoded-content') . '</h2>';
+        echo '<p>' . esc_html__('My First Vibecast explains the idea while demonstrating it. It includes HTML and measured responsive heights. Create it as a draft, explore the preview, then make it your own.', 'cast-vibecoded-content') . '</p>';
         if ($sample) {
-            echo '<p><a class="button" href="' . esc_url(admin_url('post.php?post=' . $sample . '&action=edit')) . '">' . esc_html__('Open My First Vibecast', 'vibecast') . '</a></p>';
+            echo '<p><a class="button" href="' . esc_url(admin_url('post.php?post=' . $sample . '&action=edit')) . '">' . esc_html__('Open My First Vibecast', 'cast-vibecoded-content') . '</a></p>';
         } else {
             echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '"><input type="hidden" name="action" value="vibecast_create_sample">';
             wp_nonce_field('vibecast_create_sample');
-            submit_button(__('Create My First Vibecast', 'vibecast'), 'secondary', 'submit', false);
+            submit_button(__('Create My First Vibecast', 'cast-vibecoded-content'), 'secondary', 'submit', false);
             echo '</form>';
         }
-        echo '<h2>' . esc_html__('Create your own with an AI tool', 'vibecast') . '</h2>';
-        echo '<p><button type="button" class="button button-primary" id="vibecast-copy-skill">' . esc_html__('Copy instructions', 'vibecast') . '</button> ';
-        echo '<a class="button" href="' . esc_url(plugins_url('skills/vibecast/SKILL.md', __FILE__)) . '" download="SKILL.md">' . esc_html__('Download SKILL.md', 'vibecast') . '</a></p>';
+        echo '<h2>' . esc_html__('Create your own with an AI tool', 'cast-vibecoded-content') . '</h2>';
+        echo '<p><button type="button" class="button button-primary" id="vibecast-copy-skill">' . esc_html__('Copy instructions', 'cast-vibecoded-content') . '</button> ';
+        echo '<a class="button" href="' . esc_url(plugins_url('skills/vibecast/SKILL.md', __FILE__)) . '" download="SKILL.md">' . esc_html__('Download SKILL.md', 'cast-vibecoded-content') . '</a></p>';
         echo '<p id="vibecast-copy-status" role="status" aria-live="polite"></p>';
-        echo '<label for="vibecast-skill">' . esc_html__('Authoring instructions', 'vibecast') . '</label>';
+        echo '<label for="vibecast-skill">' . esc_html__('Authoring instructions', 'cast-vibecoded-content') . '</label>';
         echo '<textarea id="vibecast-skill" class="large-text code" rows="24" readonly>' . esc_textarea($instructions) . '</textarea></div>';
     }
 
     public static function boxes(): void {
-        add_meta_box('vibecast-html', __('Reusable HTML', 'vibecast'), [self::class, 'editor'], 'cr_vibecast', 'normal', 'high');
+        add_meta_box('vibecast-html', __('Reusable HTML', 'cast-vibecoded-content'), [self::class, 'editor'], 'cr_vibecast', 'normal', 'high');
     }
 
     public static function editor(\WP_Post $post): void {
         wp_nonce_field('vibecast_save', 'vibecast_nonce');
-        echo '<p><a href="' . esc_url(admin_url('edit.php?post_type=cr_vibecast&page=vibecast-skill')) . '">' . esc_html__('Get the agent skill to create compatible HTML with your AI tool.', 'vibecast') . '</a></p>';
-        echo '<p>' . esc_html__('Paste HTML with inline styles. Scripts, event handlers, stylesheet blocks, forms, and embeds are removed. Save to refresh the preview.', 'vibecast') . '</p>';
-        echo '<label class="screen-reader-text" for="vibecast-html">' . esc_html__('HTML content', 'vibecast') . '</label>';
+        echo '<p><a href="' . esc_url(admin_url('edit.php?post_type=cr_vibecast&page=vibecast-skill')) . '">' . esc_html__('Get the agent skill to create compatible HTML with your AI tool.', 'cast-vibecoded-content') . '</a></p>';
+        echo '<p>' . esc_html__('Paste HTML with inline styles. Scripts, event handlers, stylesheet blocks, forms, and embeds are removed. Save to refresh the preview.', 'cast-vibecoded-content') . '</p>';
+        echo '<label class="screen-reader-text" for="vibecast-html">' . esc_html__('HTML content', 'cast-vibecoded-content') . '</label>';
         echo '<textarea id="vibecast-html" name="vibecast_code" class="large-text code" rows="20">' . esc_textarea(get_post_meta($post->ID, '_vibecast_code', true)) . '</textarea>';
         $heights = self::sanitize_heights(get_post_meta($post->ID, '_vibecast_heights', true));
-        echo '<h3>' . esc_html__('Responsive heights', 'vibecast') . '</h3>';
-        echo '<p>' . esc_html__('Enter the four pixel heights supplied with your HTML. Breakpoints use the available content width, not the browser width. Internal scrollbars are disabled: a height that is too short clips content. Check the saved preview and actual placement, including expanded disclosures.', 'vibecast') . '</p>';
-        foreach (['base' => __('Base: below 640px', 'vibecast'), 'sm' => __('Small: 640–767px', 'vibecast'), 'md' => __('Medium: 768–1023px', 'vibecast'), 'lg' => __('Large: 1024px and above', 'vibecast')] as $key => $label) {
-            echo '<p><label for="vibecast-height-' . esc_attr($key) . '">' . esc_html($label) . '</label> <input type="number" min="100" max="10000" required id="vibecast-height-' . esc_attr($key) . '" name="vibecast_heights[' . esc_attr($key) . ']" value="' . esc_attr($heights[$key]) . '"> ' . esc_html__('px', 'vibecast') . '</p>';
+        echo '<h3>' . esc_html__('Responsive heights', 'cast-vibecoded-content') . '</h3>';
+        echo '<p>' . esc_html__('Enter the four pixel heights supplied with your HTML. Breakpoints use the available content width, not the browser width. Internal scrollbars are disabled: a height that is too short clips content. Check the saved preview and actual placement, including expanded disclosures.', 'cast-vibecoded-content') . '</p>';
+        foreach (['base' => __('Base: below 640px', 'cast-vibecoded-content'), 'sm' => __('Small: 640–767px', 'cast-vibecoded-content'), 'md' => __('Medium: 768–1023px', 'cast-vibecoded-content'), 'lg' => __('Large: 1024px and above', 'cast-vibecoded-content')] as $key => $label) {
+            echo '<p><label for="vibecast-height-' . esc_attr($key) . '">' . esc_html($label) . '</label> <input type="number" min="100" max="10000" required id="vibecast-height-' . esc_attr($key) . '" name="vibecast_heights[' . esc_attr($key) . ']" value="' . esc_attr($heights[$key]) . '"> ' . esc_html__('px', 'cast-vibecoded-content') . '</p>';
         }
-        echo '<p>' . esc_html__('After publishing, use the Vibecast block with this ID, or copy this shortcode. Updates affect every placement.', 'vibecast') . '</p>';
-        echo '<code>[cr_vibecast id="' . absint($post->ID) . '"]</code>';
-        echo '<h3>' . esc_html__('Saved preview', 'vibecast') . '</h3>';
+        echo '<p>' . esc_html__('After publishing, use the Vibecast block with this ID, or copy this shortcode. Updates affect every placement.', 'cast-vibecoded-content') . '</p>';
+        echo '<code>[cast-vibecoded-content id="' . absint($post->ID) . '"]</code>';
+        echo '<h3>' . esc_html__('Saved preview', 'cast-vibecoded-content') . '</h3>';
         // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render() sanitizes content and escapes all iframe attributes.
         echo self::render($post->ID, 0, true);
     }
@@ -312,6 +326,8 @@ final class Plugin {
     }
 }
 
+add_action('wp_enqueue_scripts', [Plugin::class, 'enqueue_styles']);
+add_action('admin_enqueue_scripts', [Plugin::class, 'admin_styles']);
 add_action('init', [Plugin::class, 'register']);
 add_filter('wp_get_revision_ui_diff', [Plugin::class, 'revision_diff'], 10, 3);
 add_action('admin_post_vibecast_full', [Plugin::class, 'full_view']);

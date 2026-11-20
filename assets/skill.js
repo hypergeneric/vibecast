@@ -6,11 +6,11 @@
     button.addEventListener('click', async () => {
         try {
             await navigator.clipboard.writeText(text.value);
-            status.textContent = wp.i18n.__('Instructions copied.', 'vibecast');
+            status.textContent = wp.i18n.__('Instructions copied.', 'cast-vibecoded-content');
         } catch (_) {
             text.focus();
             text.select();
-            status.textContent = wp.i18n.__('Instructions selected. Copy them with your keyboard.', 'vibecast');
+            status.textContent = wp.i18n.__('Instructions selected. Copy them with your keyboard.', 'cast-vibecoded-content');
         }
     });
 })();
